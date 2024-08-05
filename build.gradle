@@ -7,7 +7,7 @@ plugins {
 group = 'com.jeju.hanrabong'
 version = '0.0.1-SNAPSHOT'
 
-java {
+java {;
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
