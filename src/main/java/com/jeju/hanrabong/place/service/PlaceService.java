@@ -2,6 +2,7 @@ package com.jeju.hanrabong.place.service;
 
 import com.jeju.hanrabong.place.entity.Place;
 import com.jeju.hanrabong.place.repository.PlaceRepository;
+import com.jeju.hanrabong.user.repository.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,7 +63,6 @@ public class PlaceService {
 
             placeRepository.save(place);
         }
-
         return response.getBody();
     }
 }
