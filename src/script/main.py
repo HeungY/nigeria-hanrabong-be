@@ -175,5 +175,5 @@ if response.status_code == 200:
     for key, value in final_merged_result.items():
         r.set(key, json.dumps(value, ensure_ascii=False))
 
-    print(final_merged_result)
-    print("Data has been stored in Redis.")
+    # print(final_merged_result)
+    # print("Data has been stored in Redis.")
