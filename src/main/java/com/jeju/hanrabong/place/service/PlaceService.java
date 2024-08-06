@@ -1,68 +1,106 @@
 package com.jeju.hanrabong.place.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeju.hanrabong.place.entity.Place;
+import com.jeju.hanrabong.place.entity.PlaceDTO;
 import com.jeju.hanrabong.place.repository.PlaceRepository;
-import com.jeju.hanrabong.user.repository.UserRepository;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.StringTokenizer;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class PlaceService {
+    private static final String API_URL_TEMPLATE = "https://www.khoa.go.kr/api/oceangrid/tideObsTemp/search.do?ServiceKey=FDNYheFOCUD2tnqe/ouq8w==&ObsCode=DT_0004&Date=%s&ResultType=json";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${kakao.api.key}")
-    private String apiKey;
-
-    private final String KAKAO_API_URL = "https://dapi.kakao.com/v2/local/search/keyword.json";
+    private final PlaceRepository placeRepository;
+    private final Random random = new Random();
+    private final String[] fishes = {"방어", "참돔", "돌돔", "다금바리", "고등어"};
+    private final Map<String, Integer> fishPoints = Map.of(
+            "방어", 100,
+            "참돔", 150,
+            "돌돔", 200,
+            "다금바리", 250,
+            "고등어", 70
+    );
 
     @Autowired
-    private PlaceRepository placeRepository;
+    public PlaceService(PlaceRepository placeRepository) {
+        this.placeRepository = placeRepository;
+    }
 
-    public String searchPlaceAndSave(String query) throws JSONException {
+    public PlaceDTO getPlaceByLocationWithRandomFish(String location) {
+        String randomFish = fishes[random.nextInt(fishes.length)];
+        List<Place> places = placeRepository.findByRegionAndFish(location, randomFish);
+
+        if (places.isEmpty()) {
+            // 제주 지역으로 재검색
+            places = placeRepository.findByRegionAndFish("제주", randomFish);
+        }
+
+
+        Place place = places.get(random.nextInt(places.size()));
+        return new PlaceDTO(
+                randomFish,
+                fishPoints.get(randomFish),
+                place.getPlaceName(),
+                place.getPlaceUrl(),
+                place.getRoadAddressName()
+        );
+    }
+
+    public double getCurrentWaterTemperature() {
         RestTemplate restTemplate = new RestTemplate();
-        String category = "FD6";
-        String x="33.3617";
-        String y="126.5292";
-        String url = KAKAO_API_URL + "?query=" + query + "&category_group_code=" + category + "&x=" + x + "&y=" + y;
-
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "KakaoAK " + apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String apiUrl = String.format(API_URL_TEMPLATE, currentDate);
 
-        // JSON 파싱 및 데이터 저장
-        JSONObject jsonResponse = new JSONObject(response.getBody());
-        JSONArray documents = jsonResponse.getJSONArray("documents");
+        ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, String.class);
 
-        // query를 공백으로 분리하여 region과 fish 설정
-        StringTokenizer tokenizer = new StringTokenizer(query," ");
-        String region = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
-        String fish = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
-
-        for (int i = 0; i < documents.length(); i++) {
-            JSONObject document = documents.getJSONObject(i);
-
-            Place place = new Place();
-            place.setKakaoPlaceId(Integer.parseInt(document.getString("id")));  // 가게 ID 저장
-            place.setPlaceName(document.getString("place_name"));
-            place.setPlaceUrl(document.getString("place_url"));
-            place.setRoadAddressName(document.getString("road_address_name"));
-            place.setRegion(region);
-            place.setFish(fish);
-
-            placeRepository.save(place);
+        try {
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+            JsonNode dataNode = rootNode.path("result").path("data");
+            if (dataNode.isArray()) {
+                JsonNode mostRecentData = null;
+                for (Iterator<JsonNode> it = dataNode.elements(); it.hasNext(); ) {
+                    JsonNode currentNode = it.next();
+                    if (mostRecentData == null || currentNode.path("record_time").asText().compareTo(mostRecentData.path("record_time").asText()) > 0) {
+                        mostRecentData = currentNode;
+                    }
+                }
+                if (mostRecentData != null) {
+                    return mostRecentData.path("water_temp").asDouble();
+                } else {
+                    throw new RuntimeException("No data found for the current date.");
+                }
+            } else {
+                throw new RuntimeException("Invalid response format.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch current temperature", e);
         }
-        return response.getBody();
+    }
+
+    public String getCurrentTemperature() {
+        double currentTemp = getCurrentWaterTemperature();
+        return String.format("%.2f°C", currentTemp);
+    }
+
+    @Scheduled(fixedRate = 3600000) // every hour
+    public void fetchAndPrintData() {
+        String currentTemp = getCurrentTemperature();
+        System.out.println("Current Water Temperature: " + currentTemp);
     }
 }
