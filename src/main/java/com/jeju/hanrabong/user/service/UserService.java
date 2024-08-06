@@ -11,13 +11,11 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+    private final UserRepository userRepository;
+
     @Autowired
-    UserRepository userRepository;
-    public void saveUser(String nickname, int score){    // 유저 저장
-        User user = new User();
-        user.setNickname(nickname);
-        user.setScore(score);
-        userRepository.save(user);
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     public boolean checkDup(String nickname){   // 유저 중복 체크
@@ -25,8 +23,19 @@ public class UserService {
         return user.isPresent();
     }
 
+    public void createUser(String nickname) {
+        User user = new User();
+        user.setNickname(nickname);
+        userRepository.save(user);
+    }
+
     public List<User> top10(){  // 탑 10 반환
         return userRepository.findTop10();
     }
 
+    public int getScore(String nickname) {
+        Optional<User> user = userRepository.findByNickname(nickname);
+
+        return user.get().getScore();
+    }
 }

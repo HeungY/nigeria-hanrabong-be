@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -21,9 +22,17 @@ public class User {
     private String nickname;
 
     @Column(nullable = false)
+    @ColumnDefault("100")
     private int score;
 
     @Column(name = "created_at",nullable = false)
     @org.hibernate.annotations.CreationTimestamp
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (score == 0) {
+            score = 100;
+        }
+    }
 }
