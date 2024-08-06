@@ -23,6 +23,7 @@ public class PlaceController {
         return ResponseEntity.ok(placeService.getCurrentTemperature());
     }
 
+
     @GetMapping("/fishing")
     public ResponseEntity<?> fishing(@RequestParam String location){    // body로 날리는지 쿼리스트링인지
         PlaceDTO place = placeService.getPlaceByLocationWithRandomFish(location);
