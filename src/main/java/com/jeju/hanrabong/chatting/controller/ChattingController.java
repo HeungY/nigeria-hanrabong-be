@@ -17,11 +17,15 @@ import java.util.List;
 @Controller
 public class ChattingController {
 
-    @Autowired
-    private ChattingRepository chattingRepository;
+    private final ChattingRepository chattingRepository;
+
+//    @Autowired
+//    private SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    public ChattingController(ChattingRepository chattingRepository) {
+        this.chattingRepository = chattingRepository;
+    }
 
     @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
