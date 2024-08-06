@@ -20,8 +20,6 @@ import java.util.*;
 
 @Service
 public class PlaceService {
-<<<<<<< HEAD
-=======
     private static final String API_URL_TEMPLATE = "https://www.khoa.go.kr/api/oceangrid/tideObsTemp/search.do?ServiceKey=FDNYheFOCUD2tnqe/ouq8w==&ObsCode=DT_0004&Date=%s&ResultType=json";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -110,5 +108,4 @@ public class PlaceService {
         String currentTemp = getCurrentTemperature();
         System.out.println("Current Water Temperature: " + currentTemp);
     }
->>>>>>> feature/place
 }
