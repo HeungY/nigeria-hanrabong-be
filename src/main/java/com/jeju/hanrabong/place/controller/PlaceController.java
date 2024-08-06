@@ -31,5 +31,4 @@ public class PlaceController {
         String str ="Service에 location을 전달해서 무언갈 받아야 합니다잉";
         return ResponseEntity.ok(str);
     }
-
 }
