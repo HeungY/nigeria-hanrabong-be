@@ -14,9 +14,6 @@ public class PlaceController {
     @Autowired
     PlaceService placeService;
 
-    @GetMapping("/search")
-    public String searchPlace(@RequestParam String query) throws JSONException {
-        return placeService.searchPlaceAndSave(query);
-    }
+
 
 }
