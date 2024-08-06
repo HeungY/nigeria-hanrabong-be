@@ -24,5 +24,3 @@ public class RedisController {
         return "Value retrieved from Redis: " + value;
     }
 }
-
-
