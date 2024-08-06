@@ -43,9 +43,14 @@ public class PlaceService {
         String randomFish = fishes[random.nextInt(fishes.length)];
         List<Place> places = placeRepository.findByRegionAndFish(location, randomFish);
 
-        if (places.isEmpty()) {
-            // 제주 지역으로 재검색
+        if (places.isEmpty()) { // 정확한 지역과 생선이 없다면, 해당 지역의 횟집 검색
+            places = placeRepository.findByRegionAndFish(location, "횟집");
+        }
+        if (places.isEmpty()) { // 해당 지역의 횟집도 없다면, 제주 전역의 타겟 생선 검색
             places = placeRepository.findByRegionAndFish("제주", randomFish);
+        }
+        if (places.isEmpty()) { // 제주 전역의 타겟 생선이 없다면, 제주 전역의 횟집 검색
+            places = placeRepository.findByRegionAndFish("제주", "횟집");
         }
 
 
