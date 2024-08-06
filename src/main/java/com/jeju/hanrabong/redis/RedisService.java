@@ -45,8 +45,7 @@ public class RedisService {
         redisTemplate.delete(keys);
     }
 
-    public Map<String, String> getFishBasedOnTemperature() {
-        double currentTemp = apiService.getCurrentWaterTemperature();
+    public Map<String, String> getFishBasedOnTemperature(double currentTemp) {
         Map<String, String> allValues = getAllValues();
 
         return allValues.entrySet().stream().collect(Collectors.toMap(
@@ -90,29 +89,27 @@ public class RedisService {
     }
 
     public Map<String, Object> getFilteredFishWithCurrentTemp() {
-        clearAllValues(); // Clear Redis values
+//        clearAllValues(); // Clear Redis values
         double currentTemp = apiService.getCurrentWaterTemperature();
-        Map<String, String> filteredFish = getFishBasedOnTemperature();
+        Map<String, String> filteredFish = getFishBasedOnTemperature(currentTemp);
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("current_t", currentTemp);
-        resultMap.putAll(filteredFish);
+        resultMap.put("filtered_fish", filteredFish);
         return resultMap;
     }
 
-    public Map<String, String> getFilteredFishByLocation() {
-        double currentTemp = apiService.getCurrentWaterTemperature();
-        Map<String, String> filteredFish = getFishBasedOnTemperature();
-        Map<String, String> fishByLocation = new HashMap<>(filteredFish);
-        fishByLocation.put("current_t", String.valueOf(currentTemp));
-        return fishByLocation;
-    }
-
     public void printFilteredFish() {
-        Map<String, String> filteredFish = getFilteredFishByLocation();
+        Map<String, Object> resultMap = getFilteredFishWithCurrentTemp();
+        System.out.println("Current Temperature: " + resultMap.get("current_t"));
+        Map<String, String> filteredFish = (Map<String, String>) resultMap.get("filtered_fish");
         filteredFish.forEach((location, fish) -> {
             System.out.println("Location: " + location);
             System.out.println("Fish: " + fish);
             System.out.println("--------------");
         });
+    }
+
+    public Map<String, Object> getFilteredFishMap() {
+        return getFilteredFishWithCurrentTemp();
     }
 }
