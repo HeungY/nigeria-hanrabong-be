@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/v1")
 public class PlaceController {
@@ -23,7 +25,11 @@ public class PlaceController {
 
     @GetMapping("/fishing")
     public ResponseEntity<?> fishing(@RequestParam String location, @RequestParam String nickname){    // body로 날리는지 쿼리스트링인지
-        PlaceDTO place = placeService.getPlaceByLocationWithRandomFish(location,nickname);
-        return ResponseEntity.ok(place);
+        Optional<PlaceDTO> placeResponse = placeService.getPlaceByLocationWithRandomFish(location, nickname);
+        if (placeResponse.isPresent()) {
+            return ResponseEntity.ok(placeResponse.get());
+        } else {
+            return ResponseEntity.status(400).body("No fishing attempts left or user not found");
+        }
     }
 }

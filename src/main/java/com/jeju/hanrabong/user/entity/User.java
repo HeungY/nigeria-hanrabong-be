@@ -1,9 +1,7 @@
 package com.jeju.hanrabong.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
@@ -26,7 +24,7 @@ public class User {
     private int score;
 
     @Column(nullable = false)
-    @ColumnDefault("0")
+    @ColumnDefault("5")
     private int count;
 
     @Column(name = "created_at",nullable = false)
