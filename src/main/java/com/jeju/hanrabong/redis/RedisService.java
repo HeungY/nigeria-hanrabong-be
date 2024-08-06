@@ -90,7 +90,7 @@ public class RedisService {
     }
 
     public Map<String, Object> getFilteredFishWithCurrentTemp() {
-        clearAllValues();
+        clearAllValues(); // Clear Redis values
         double currentTemp = apiService.getCurrentWaterTemperature();
         Map<String, String> filteredFish = getFishBasedOnTemperature();
         Map<String, Object> resultMap = new HashMap<>();
@@ -99,10 +99,20 @@ public class RedisService {
         return resultMap;
     }
 
+    public Map<String, String> getFilteredFishByLocation() {
+        double currentTemp = apiService.getCurrentWaterTemperature();
+        Map<String, String> filteredFish = getFishBasedOnTemperature();
+        Map<String, String> fishByLocation = new HashMap<>(filteredFish);
+        fishByLocation.put("current_t", String.valueOf(currentTemp));
+        return fishByLocation;
+    }
+
     public void printFilteredFish() {
-        Map<String, Object> resultMap = getFilteredFishWithCurrentTemp();
-        resultMap.forEach((key, value) -> {
-            System.out.println(key + ": " + value);
+        Map<String, String> filteredFish = getFilteredFishByLocation();
+        filteredFish.forEach((location, fish) -> {
+            System.out.println("Location: " + location);
+            System.out.println("Fish: " + fish);
+            System.out.println("--------------");
         });
     }
 }
