@@ -25,6 +25,10 @@ public class User {
     @ColumnDefault("100")
     private int score;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private int count;
+
     @Column(name = "created_at",nullable = false)
     @org.hibernate.annotations.CreationTimestamp
     private LocalDateTime createdAt;

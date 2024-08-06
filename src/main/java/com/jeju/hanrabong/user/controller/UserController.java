@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping("/score")
-    public ResponseEntity<Response<Integer>> getUsers(@RequestParam String nickname) {
+    public ResponseEntity<Response<Integer>> getUsers(@RequestParam("nickname") String nickname) {
         int score = userService.getScore(nickname);
         return Response.createDataResponse(score);
     }

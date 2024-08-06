@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeju.hanrabong.place.entity.Place;
 import com.jeju.hanrabong.place.entity.PlaceDTO;
+import com.jeju.hanrabong.place.entity.TempDTO;
 import com.jeju.hanrabong.place.repository.PlaceRepository;
+import com.jeju.hanrabong.user.entity.User;
+import com.jeju.hanrabong.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,22 +27,35 @@ public class PlaceService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final PlaceRepository placeRepository;
+    private final UserRepository userRepository;
     private final Random random = new Random();
-    private final String[] fishes = {"방어", "참돔", "돌돔", "다금바리", "고등어"};
-    private final Map<String, Integer> fishPoints = Map.of(
-            "방어", 100,
-            "참돔", 150,
-            "돌돔", 200,
-            "다금바리", 250,
-            "고등어", 70
+    private final String[] fishes = {"다금바리", "참돔", "돌돔", "감성돔", "방어", "우럭", "벵에돔", "무늬오징어", "한치", "고등어", "trash1", "trach2", "trach3", "trash4", "trash5"};
+    private final Map<String, Integer> fishPoints = Map.ofEntries(
+            Map.entry("다금바리", 100),
+            Map.entry("참돔",85 ),
+            Map.entry("돌돔", 90),
+            Map.entry("감성돔", 87),
+            Map.entry("방어", 75),
+            Map.entry("우럭", 60),
+            Map.entry("벵에돔", 50),
+            Map.entry("무늬오징어", 80),
+            Map.entry("한치", 73),
+            Map.entry("고등어", 77),
+            Map.entry("trash1", 1),
+            Map.entry("trash2", 2),
+            Map.entry("trash3", 3),
+            Map.entry("trash4", 5),
+            Map.entry("trash5", 14)
     );
 
     @Autowired
-    public PlaceService(PlaceRepository placeRepository) {
+    public PlaceService(PlaceRepository placeRepository, UserRepository userRepository) {
         this.placeRepository = placeRepository;
+        this.userRepository = userRepository;
     }
 
-    public PlaceDTO getPlaceByLocationWithRandomFish(String location) {
+    public PlaceDTO getPlaceByLocationWithRandomFish(String location, String nickname) {
+        Optional<User> user = userRepository.findByNickname(nickname);
         String randomFish = fishes[random.nextInt(fishes.length)];
         List<Place> places = placeRepository.findByRegionAndFish(location, randomFish);
 
@@ -52,6 +68,11 @@ public class PlaceService {
         if (places.isEmpty()) { // 제주 전역의 타겟 생선이 없다면, 제주 전역의 횟집 검색
             places = placeRepository.findByRegionAndFish("제주", "횟집");
         }
+
+        int points = fishPoints.get(randomFish);
+        user.setPoint(user.getPoint() + points);
+        user.setCount(user.getCount() - 1);
+        userRepository.save(user);
 
 
         Place place = places.get(random.nextInt(places.size()));
@@ -98,14 +119,17 @@ public class PlaceService {
         }
     }
 
-    public String getCurrentTemperature() {
+    public TempDTO getCurrentTemperature() {
+//        double currentTemp = getCurrentWaterTemperature();
+//        return String.format("%.2f°C", currentTemp);
         double currentTemp = getCurrentWaterTemperature();
-        return String.format("%.2f°C", currentTemp);
+        String formattedTemp = String.format("%.2f°C", currentTemp);
+        return new TempDTO(formattedTemp);
     }
 
     @Scheduled(fixedRate = 3600000) // every hour
     public void fetchAndPrintData() {
-        String currentTemp = getCurrentTemperature();
-        System.out.println("Current Water Temperature: " + currentTemp);
+        TempDTO currentTemp = getCurrentTemperature();
+        System.out.println("Current Water Temperature: " + currentTemp.getData());
     }
 }
