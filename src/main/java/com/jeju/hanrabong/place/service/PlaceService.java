@@ -8,6 +8,7 @@ import com.jeju.hanrabong.place.entity.TempDTO;
 import com.jeju.hanrabong.place.repository.PlaceRepository;
 import com.jeju.hanrabong.user.entity.User;
 import com.jeju.hanrabong.user.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +29,7 @@ public class PlaceService {
 
     private final PlaceRepository placeRepository;
     private final UserRepository userRepository;
+    private double currentWaterTemp;
     private final Random random = new Random();
     private final String[] fishes = {"다금바리", "참돔", "돌돔", "감성돔", "방어", "우럭", "벵에돔", "무늬오징어", "한치", "고등어", "돌멩이", "나이지리아산 한라봉", "뚱이", "징징이", "앨런"};
     private final Map<String, Integer> fishPoints = Map.ofEntries(
@@ -95,6 +97,7 @@ public class PlaceService {
         ));
     }
 
+
     public double getCurrentWaterTemperature() {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -103,7 +106,9 @@ public class PlaceService {
         String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String apiUrl = String.format(API_URL_TEMPLATE, currentDate);
 
+
         ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, String.class);
+
 
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
@@ -129,17 +134,21 @@ public class PlaceService {
         }
     }
 
-    public TempDTO getCurrentTemperature() {
-//        double currentTemp = getCurrentWaterTemperature();
-//        return String.format("%.2f°C", currentTemp);
-        double currentTemp = getCurrentWaterTemperature();
-        String formattedTemp = String.format("%.2f°C", currentTemp);
-        return new TempDTO(formattedTemp);
+    @PostConstruct
+    public void initCurrentWaterTemperature() {
+        currentWaterTemp = getCurrentWaterTemperature();
     }
 
-    @Scheduled(fixedRate = 3600000) // every hour
-    public void fetchAndPrintData() {
-        TempDTO currentTemp = getCurrentTemperature();
-        System.out.println("Current Water Temperature: " + currentTemp.getData());
+    @Scheduled(cron = "0 0 * * * *")    // 매 시간마다 API 호출하여 현재 수온 정보 받아옴.
+    public void setCurrentTemperature() {
+//        double currentTemp = getCurrentWaterTemperature();
+//        return String.format("%.2f°C", currentTemp);
+        currentWaterTemp = getCurrentWaterTemperature();
+
+    }
+
+    public TempDTO getCurrentTemperature() {
+        String formattedTemp = String.format("%.2f°C", currentWaterTemp);
+        return new TempDTO(formattedTemp);
     }
 }

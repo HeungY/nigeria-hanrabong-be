@@ -1,5 +1,6 @@
 package com.jeju.hanrabong.place.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jeju.hanrabong.place.entity.PlaceDTO;
 import com.jeju.hanrabong.place.entity.TempDTO;
 import com.jeju.hanrabong.place.service.PlaceService;
@@ -24,7 +25,7 @@ public class PlaceController {
     }
 
     @GetMapping("/fishing")
-    public ResponseEntity<?> fishing(@RequestParam String location, @RequestParam String nickname){    // body로 날리는지 쿼리스트링인지
+    public ResponseEntity<?> fishing(@RequestParam String location, @RequestParam String nickname) {    // body로 날리는지 쿼리스트링인지
         Optional<PlaceDTO> placeResponse = placeService.getPlaceByLocationWithRandomFish(location, nickname);
         if (placeResponse.isPresent()) {
             return ResponseEntity.ok(placeResponse.get());
